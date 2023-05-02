@@ -66,8 +66,48 @@ void update(dt_lib_module_t *self)
     d->widget = gtk_label_new("");
     g_signal_connect(G_OBJECT(d->widget), "destroy", G_CALLBACK(gtk_widget_destroyed), &d->widget);
     gtk_widget_show(d->widget);
-    gtk_box_pack_start(GTK_BOX(dtgtk_expander_get_header(DTGTK_EXPANDER(self->expander))), d->widget, TRUE, TRUE, 0);
 
+    dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] in ioporder.c:update, about to read header from expander at '%p' referenced by '%s'\n",
+             self->expander,
+             self->name(self));
+
+    const dt_view_t *v = dt_view_manager_get_current_view(darktable.view_manager);
+    const char *cur_view = "";
+    if(v->view(v) == DT_VIEW_DARKROOM) {
+      cur_view = "darkroom";
+    } else if (v->view(v) == DT_VIEW_LIGHTTABLE) {
+      cur_view = "lighttable";
+    } else {
+      cur_view = "other";
+    }
+    dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] ioporder.c:update was called from %s\n", cur_view);
+
+    GtkWidget *header = dtgtk_expander_get_header(DTGTK_EXPANDER(self->expander)); 
+    
+    if (header) {
+      dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] got header at %p\n", header);
+
+      GList *children = gtk_container_get_children(GTK_CONTAINER(header));
+      for (const GList *iter = children; iter != NULL; iter = g_list_next(iter))
+      {
+        const char* n = gtk_widget_get_name(GTK_WIDGET(iter->data));
+        dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] '%s' is a child of expander header\n", n);
+        if (strcmp(n, "GtkEventBox") == 0) {
+          const GtkWidget * const lbl = gtk_bin_get_child(GTK_BIN(iter->data));
+          if (lbl) {
+            const char * const text_n = gtk_widget_get_name(GTK_WIDGET(lbl));
+            dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] The name of the header eventbox child is '%s'\n", text_n);
+            const char * const text_l = gtk_label_get_text(GTK_LABEL(lbl));
+            dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] The label of the header eventbox child is '%s'\n", text_l);
+          }
+        }
+      }
+      g_list_free(children);
+    } else {
+      dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] expander_get_header returned NULL (%p)\n", header);
+    }
+
+    gtk_box_pack_start(GTK_BOX(dtgtk_expander_get_header(DTGTK_EXPANDER(self->expander))), d->widget, TRUE, TRUE, 0);
     gtk_widget_destroy(self->arrow);
     self->arrow = NULL;
   }

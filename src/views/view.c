@@ -199,14 +199,17 @@ void dt_vm_remove_child(GtkWidget *widget, gpointer data)
    */
 static void _remove_child(GtkWidget *child,GtkContainer *container)
 {
+    dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] in views.c:_remove_child, removing child at %p\n", child);
     if(DTGTK_IS_EXPANDER(child))
     {
+      dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] child is an expander, calling widget_destroy\n");
       GtkWidget * evb = dtgtk_expander_get_body_event_box(DTGTK_EXPANDER(child));
       gtk_container_remove(GTK_CONTAINER(evb),dtgtk_expander_get_body(DTGTK_EXPANDER(child)));
       gtk_widget_destroy(child);
     }
     else
     {
+      dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] child is NOT na expander, calling container_remove\n");
       gtk_container_remove(container,child);
     }
 }

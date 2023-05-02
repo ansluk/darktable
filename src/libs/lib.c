@@ -1033,6 +1033,10 @@ GtkWidget *dt_lib_gui_get_expander(dt_lib_module_t *module)
   dt_gui_add_class(pluginui_frame, "dt_plugin_ui");
   module->expander = expander;
 
+  dt_print(DT_DEBUG_ALWAYS, "[ioporder_use_after_free] created new expander at %p for module '%s'\n", 
+             expander,
+             module->name(module));
+
   gtk_widget_set_hexpand(module->widget, FALSE);
   gtk_widget_set_vexpand(module->widget, FALSE);
 
